@@ -4,18 +4,24 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import net.neoforged.fml.loading.FMLPaths;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public final class AccessWidenerData {
     public final Set<String> classes = new HashSet<>();
@@ -33,21 +39,19 @@ public final class AccessWidenerData {
 
     private static AccessWidenerData load() {
         AccessWidenerData data = new AccessWidenerData();
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try {
-            Enumeration<URL> urls = cl.getResources("fabric.mod.json");
-            while (urls.hasMoreElements()) {
-                URL url = urls.nextElement();
-                String awName = readAwName(url);
+        for (Path jar : candidateJars()) {
+            try (ZipFile zip = new ZipFile(jar.toFile())) {
+                if (zip.getEntry("fabric.mod.json") == null) continue;
+                String awName = readAwName(zip);
                 if (awName == null) continue;
-                try (InputStream is = cl.getResourceAsStream(awName)) {
-                    if (is != null) {
-                        data.parse(is);
-                    }
+                ZipEntry awEntry = zip.getEntry(awName);
+                if (awEntry == null) continue;
+                try (InputStream is = zip.getInputStream(awEntry)) {
+                    data.parse(is);
                 }
-            }
-        } catch (IOException ignored) {}
-        try (InputStream extra = cl.getResourceAsStream("foxy-extra.accesswidener")) {
+            } catch (IOException ignored) {}
+        }
+        try (InputStream extra = Thread.currentThread().getContextClassLoader().getResourceAsStream("foxy-extra.accesswidener")) {
             if (extra != null) {
                 data.parse(extra);
             }
@@ -55,12 +59,31 @@ public final class AccessWidenerData {
         return data;
     }
 
-    private static String readAwName(URL fabricModJson) {
-        try (InputStream is = fabricModJson.openStream()) {
+    private static List<Path> candidateJars() {
+        List<Path> jars = new ArrayList<>();
+        for (String entry : System.getProperty("java.class.path", "").split(System.getProperty("path.separator"))) {
+            if (entry.endsWith(".jar")) {
+                jars.add(Path.of(entry));
+            }
+        }
+        try {
+            Path mods = FMLPaths.MODSDIR.get();
+            if (mods != null && Files.isDirectory(mods)) {
+                try (Stream<Path> walk = Files.list(mods)) {
+                    walk.filter(p -> p.getFileName().toString().endsWith(".jar")).forEach(jars::add);
+                }
+            }
+        } catch (Throwable ignored) {}
+        return jars;
+    }
+
+    private static String readAwName(ZipFile zip) throws IOException {
+        ZipEntry fmj = zip.getEntry("fabric.mod.json");
+        try (InputStream is = zip.getInputStream(fmj)) {
             JsonObject obj = JsonParser.parseReader(new InputStreamReader(is, StandardCharsets.UTF_8)).getAsJsonObject();
             JsonElement aw = obj.get("accessWidener");
             return aw != null && aw.isJsonPrimitive() ? aw.getAsString() : null;
-        } catch (IOException | IllegalStateException e) {
+        } catch (IllegalStateException e) {
             return null;
         }
     }

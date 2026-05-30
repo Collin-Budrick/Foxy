@@ -19,7 +19,7 @@ prism {
 
     version("26.1.2") {
         neoforge {
-            loaderVersion = "26.1.2.68-beta"
+            loaderVersion = "26.1.2.48-beta"
             loaderVersionRange = "[4,)"
 
             dependencies {
@@ -30,6 +30,8 @@ prism {
                 compileOnly("cpw.mods:modlauncher:11.0.5")
                 compileOnly("cpw.mods:securejarhandler:3.0.8")
                 compileOnly("net.neoforged.fancymodloader:loader:11.0.13")
+
+                compileOnly("maven.modrinth:chunky:hEXc6nbN")
             }
         }
     }
