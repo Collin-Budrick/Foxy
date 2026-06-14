@@ -15,6 +15,7 @@ prism {
     }
 
     modrinthMaven()
+    maven("Local Voxy Backport", rootProject.file("libs-maven").toURI().toString())
     maven("NeoForged", "https://maven.neoforged.net/releases")
 
     version("26.1.2") {
@@ -32,6 +33,23 @@ prism {
                 compileOnly("net.neoforged.fancymodloader:loader:11.0.13")
 
                 compileOnly("maven.modrinth:chunky:hEXc6nbN")
+            }
+        }
+    }
+
+    version("1.21.1") {
+        neoforge {
+            loaderVersion = "21.1.233"
+            loaderVersionRange = "[4,)"
+
+            dependencies {
+                compileOnly("maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge")
+                runtimeOnly("maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge")
+                compileOnly("local.voxy:voxy:0.2.10-alpha")
+                runtimeOnly("local.voxy:voxy:0.2.10-alpha")
+                compileOnly("cpw.mods:modlauncher:11.0.5")
+                compileOnly("cpw.mods:securejarhandler:3.0.8")
+                compileOnly("net.neoforged.fancymodloader:loader:4.0.42")
             }
         }
     }

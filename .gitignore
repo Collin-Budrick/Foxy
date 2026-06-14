@@ -10,4 +10,7 @@ out/
 runs/
 run/
 **/run/
+libs/
+libs-maven/
+modpack-backups/
 .DS_Store
