@@ -31,7 +31,7 @@ all read from whatever Voxy jar is present, so Voxy updates do not require Foxy 
 ## Supported targets
 
 - Minecraft 26.1.2 / NeoForge / Sodium / Voxy 0.2.16-beta
-- Minecraft 1.21.1 / NeoForge 21.1.233 / Sodium 0.6.13 / a Mojmap Voxy 0.2.10-alpha
+- Minecraft 1.21.1 / NeoForge 21.1.233 / Sodium 0.8.12-beta.1 / a Mojmap Voxy 0.2.10-alpha
   backport jar
 
 Voxy is All Rights Reserved and is not redistributed by this fork. For the 1.21.1 target,

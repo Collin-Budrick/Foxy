@@ -43,8 +43,8 @@ prism {
             loaderVersionRange = "[4,)"
 
             dependencies {
-                compileOnly("maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge")
-                runtimeOnly("maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge")
+                compileOnly("maven.modrinth:sodium:mc1.21.1-0.8.12-beta.1-neoforge")
+                runtimeOnly("maven.modrinth:sodium:mc1.21.1-0.8.12-beta.1-neoforge")
                 compileOnly("local.voxy:voxy:0.2.10-alpha")
                 runtimeOnly("local.voxy:voxy:0.2.10-alpha")
                 compileOnly("cpw.mods:modlauncher:11.0.5")

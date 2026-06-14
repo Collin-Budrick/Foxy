@@ -102,7 +102,7 @@ public class FoxyFabricModReader implements IModFileReader {
         sb.append("[[dependencies.").append(modId).append("]]\n");
         sb.append("modId = \"neoforge\"\ntype = \"required\"\nversionRange = \"[4,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n");
         sb.append("[[dependencies.").append(modId).append("]]\n");
-        sb.append("modId = \"sodium\"\ntype = \"required\"\nversionRange = \"[0.6.13,0.7)\"\nordering = \"NONE\"\nside = \"CLIENT\"\n");
+        sb.append("modId = \"sodium\"\ntype = \"required\"\nversionRange = \"[0.8.12-beta.1,)\"\nordering = \"NONE\"\nside = \"CLIENT\"\n");
         for (String mixin : readMixins(fmj)) {
             sb.append("[[mixins]]\nconfig = \"").append(esc(mixin)).append("\"\n");
         }

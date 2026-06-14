@@ -19,7 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipFile;
 
 public class FoxyDependencyLocator implements IDependencyLocator {
 
@@ -35,16 +37,16 @@ public class FoxyDependencyLocator implements IDependencyLocator {
     }
 
     private static void extractNestedJars(JarContents contents, IDiscoveryPipeline pipeline) {
-        JsonArray jars = readJarsArray(contents);
-        if (jars == null) {
+        List<String> jars = readNestedJarPaths(contents);
+        if (jars.isEmpty()) {
             return;
         }
-        for (JsonElement entry : jars) {
-            if (!entry.isJsonObject()) continue;
-            JsonElement file = entry.getAsJsonObject().get("file");
-            if (file == null || !file.isJsonPrimitive()) continue;
+        for (String file : jars) {
+            if (shouldSkipNestedJar(file)) {
+                continue;
+            }
             try {
-                Path extracted = extract(contents, file.getAsString());
+                Path extracted = extract(contents, file);
                 if (extracted != null) {
                     IModFile lib = IModFile.create(
                             SecureJar.from(JarContents.of(extracted)),
@@ -57,15 +59,52 @@ public class FoxyDependencyLocator implements IDependencyLocator {
         }
     }
 
-    private static JsonArray readJarsArray(JarContents contents) {
+    private static boolean shouldSkipNestedJar(String file) {
+        String name = file.substring(file.lastIndexOf('/') + 1);
+        return name.startsWith("lz4-java-")
+                || name.startsWith("xz-")
+                || name.contains("-natives-linux");
+    }
+
+    private static List<String> readNestedJarPaths(JarContents contents) {
+        List<String> result = new ArrayList<>();
         try (InputStream is = openFile(contents, "fabric.mod.json")) {
-            if (is == null) return null;
+            if (is == null) return List.of();
             JsonObject obj = JsonParser.parseReader(new InputStreamReader(is, StandardCharsets.UTF_8)).getAsJsonObject();
             JsonElement jars = obj.get("jars");
-            return jars != null && jars.isJsonArray() ? jars.getAsJsonArray() : null;
+            if (jars != null && jars.isJsonArray()) {
+                JsonArray entries = jars.getAsJsonArray();
+                for (JsonElement entry : entries) {
+                    if (!entry.isJsonObject()) continue;
+                    JsonElement file = entry.getAsJsonObject().get("file");
+                    if (file != null && file.isJsonPrimitive()) {
+                        result.add(file.getAsString());
+                    }
+                }
+            }
         } catch (IOException | IllegalStateException e) {
-            return null;
+            return List.of();
         }
+        if (!result.isEmpty()) {
+            return result;
+        }
+        Path jarPath = contents.getPrimaryPath();
+        if (jarPath == null || !Files.isRegularFile(jarPath)) {
+            return List.of();
+        }
+        try (ZipFile zip = new ZipFile(jarPath.toFile())) {
+            var entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                var entry = entries.nextElement();
+                String name = entry.getName();
+                if (!entry.isDirectory() && name.startsWith("META-INF/jars/") && name.endsWith(".jar")) {
+                    result.add(name);
+                }
+            }
+        } catch (IOException ignored) {
+            return List.of();
+        }
+        return result;
     }
 
     private static Path extract(JarContents contents, String innerPath) throws IOException {
